@@ -1,10 +1,13 @@
 const Hole = require("../../Modals/Hole");
 const GolfCourse = require("../../Modals/GolfCourse");
+const mongoose = require("mongoose");
 
 // Save holes for a course
 const saveCourseHoles = async (req, res) => {
   try {
     const { courseId, holes } = req.body;
+    
+    // Debug logs removed
 
     if (!courseId || !holes || !Array.isArray(holes)) {
       return res.status(400).json({
@@ -12,13 +15,23 @@ const saveCourseHoles = async (req, res) => {
         message: "Course ID and holes array are required"
       });
     }
+    
+    // Validate courseId format
+    if (!mongoose.Types.ObjectId.isValid(courseId)) {
+      return res.status(400).json({
+        status: false,
+        message: "Invalid course ID format"
+      });
+    }
 
     // Verify course exists
     const course = await GolfCourse.findById(courseId);
+    
     if (!course) {
       return res.status(404).json({
         status: false,
-        message: "Golf course not found"
+        message: "Golf course not found",
+        debug: { searchedId: courseId }
       });
     }
 
@@ -28,6 +41,7 @@ const saveCourseHoles = async (req, res) => {
     // Save new holes
     const savedHoles = [];
     for (const holeData of holes) {
+      
       const hole = new Hole({
         courseId,
         courseName: holeData.courseName,
@@ -35,6 +49,9 @@ const saveCourseHoles = async (req, res) => {
         par: holeData.par,
         hcp: holeData.hcp,
         green: holeData.green,
+        waterHazard: holeData.waterHazard,
+        sandBunker: holeData.sandBunker,
+        fairway: holeData.fairway,
         teeBoxes: holeData.teeBoxes
       });
       
@@ -67,6 +84,8 @@ const getCourseHoles = async (req, res) => {
   try {
     const { courseId } = req.params;
 
+    // Debug logs removed
+
     if (!courseId) {
       return res.status(400).json({
         status: false,
@@ -75,6 +94,8 @@ const getCourseHoles = async (req, res) => {
     }
 
     const holes = await Hole.find({ courseId }).sort({ hole: 1 });
+    
+    // Debug logs removed
 
     res.status(200).json({
       status: true,

@@ -33,28 +33,32 @@ route.get("/getGolfCourses", async (req, res) => {
       const courses = await GolfCourse.find(); 
       res.status(200).json({ message: "Golf courses retrieved successfully", courses });
     } catch (err) {
-      console.error(err);
       res.status(500).json({ message: "Server error" });
     }
   });
 
 
-  route.delete("/delete-GolfCourse/:id", protectAdmin , async (req, res) => {
-    const { id } = req.params;
-  
-    const club = await GolfCourse.findById(id);
-  
-    if (!club) {
-        res.status(404);
-        throw new Error("Club not found");
+  route.delete("/delete-GolfCourse/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const course = await GolfCourse.findById(id);
+      if (!course) {
+          return res.status(404).json({
+            status: false,
+            message: "Golf course not found"
+          });
+      }
+      await course.deleteOne();
+      res.status(200).json({
+          status: true,
+          message: "Golf course deleted successfully",
+      });
+    } catch (error) {
+      res.status(500).json({
+        status: false,
+        message: "Something went wrong while deleting the golf course"
+      });
     }
-  
-    await club.deleteOne();
-  
-    res.status(200).json({
-        status: true,
-        message: "Club deleted successfully",
-    });
   })
 
 

@@ -4,6 +4,7 @@ const GolfCourse = require("../Modals/GolfCourse");
 const { ProfileUpload } = require("../middleWere/ProfileImageMiddlewere");
 const { coursesUpload } = require("../middleWere/golfImageMiddlewere");
 const { saveCourse, getSavedCourses, getCoursesWithSavedStatus, getCoursesWithSavedStatusNew } = require("../Controllers/course/caurses");
+const { saveCourseHoles, getCourseHoles, deleteCourseHoles } = require("../Controllers/course/holeController");
 const protectUser = require("../middleWere/authUserMiddlewere");
 const protectAdmin = require("../middleWere/authAdminMiddlewere");
 
@@ -62,16 +63,30 @@ router.post("/addCourse", uploadFields, async (req, res) => {
       description,
       holesCount,
       teeDetails,
-      facilities,
-      contact,
+      facilities: facilities ? [facilities] : [], // Convert string to array
+      contact: contact ? { phone: contact } : {}, // Convert string to object
       rating: [],
     });
-    console.log("image" , req.files['image'][0]);
     
+    // Log image info if it exists
+    if (req.files && req.files['image'] && req.files['image'][0]) {
+      console.log("image", req.files['image'][0]);
+    }
 
     await newCourse.save();
 
-    res.status(201).json({status : true, message: "Golf course added successfully", course: newCourse });
+    console.log("Course saved successfully:", {
+      id: newCourse._id,
+      name: newCourse.name,
+      courseObject: newCourse
+    });
+
+    res.status(201).json({
+      status: true, 
+      message: "Golf course added successfully", 
+      course: newCourse,
+      courseId: newCourse._id
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -269,6 +284,134 @@ router.get("/getSystems", async (req, res) => {
   }
 });
 
+// Update a Golf Course
+router.put("/updateCourse/:courseId", uploadFields, async (req, res) => {
+  try {
+    console.log("=== UPDATE COURSE DEBUG ===");
+    console.log("Course ID:", req.params.courseId);
+    console.log("Request body:", req.body);
+    console.log("Files:", req.files);
+    
+    const { courseId } = req.params;
+    const {
+      name,
+      address,
+      city,
+      state,
+      latitude,
+      longitude,
+      description,
+      holesCount,
+      teeDetails,
+      facilities,
+      contact,
+    } = req.body;
 
+    // Check if course exists
+    const existingCourse = await GolfCourse.findById(courseId);
+    if (!existingCourse) {
+      console.log("Course not found in database");
+      return res.status(404).json({
+        status: false,
+        message: "Golf course not found"
+      });
+    }
+
+    console.log("Found existing course:", existingCourse.name);
+
+    // Define the required fields
+    const requiredFields = ["name", "address", "city", "state", "description"];
+
+    // Validate required fields
+    for (const field of requiredFields) {
+      if (!req.body[field]) {
+        console.log(`Missing required field: ${field}`);
+        return res.status(400).json({ 
+          status: false,
+          error: `${field} is required` 
+        });
+      }
+    }
+
+    // Prepare update data
+    const updateData = {
+      name,
+      address,
+      city,
+      state,
+      latitude,
+      longitude,
+      description,
+      holesCount,
+      teeDetails,
+      facilities: facilities ? [facilities] : [],
+      contact: contact ? { phone: contact } : {},
+    };
+
+    // Handle image updates
+    if (req.files && req.files['image'] && req.files['image'][0]) {
+      updateData.image = req.files['image'][0].path;
+      console.log("New image uploaded:", req.files['image'][0].path);
+    }
+
+    if (req.files && req.files['gallery'] && req.files['gallery'].length > 0) {
+      updateData.gallery = req.files['gallery'].map(file => file.path);
+      console.log("New gallery images:", req.files['gallery'].map(f => f.path));
+    }
+
+    console.log("Update data:", updateData);
+
+    // Update the course
+    const updatedCourse = await GolfCourse.findByIdAndUpdate(
+      courseId,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    console.log("Course updated successfully:", {
+      id: updatedCourse._id,
+      name: updatedCourse.name
+    });
+
+    res.status(200).json({
+      status: true,
+      message: "Golf course updated successfully",
+      course: updatedCourse
+    });
+  } catch (err) {
+    console.error("Update course error:", err);
+    res.status(500).json({
+      status: false,
+      message: "Server error while updating course"
+    });
+  }
+});
+
+// Test route to check database connection
+router.get("/test", async (req, res) => {
+  try {
+    const courseCount = await GolfCourse.countDocuments();
+    const allCourses = await GolfCourse.find({}, { name: 1, _id: 1, createdAt: 1 });
+    
+    res.status(200).json({
+      status: true,
+      message: "Database connection successful",
+      courseCount: courseCount,
+      courses: allCourses
+    });
+  } catch (error) {
+    console.error("Database test error:", error);
+    res.status(500).json({
+      status: false,
+      message: "Database connection failed",
+      error: error.message
+    });
+  }
+});
+
+// Hole management routes
+router.post("/saveHoles", saveCourseHoles);
+router.get("/getHoles/:courseId", getCourseHoles);
+router.delete("/deleteHoles/:courseId", deleteCourseHoles);
 
 module.exports = router;

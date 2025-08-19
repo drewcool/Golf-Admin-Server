@@ -10,6 +10,11 @@ const TeeBoxSchema = new mongoose.Schema({
   hex: { type: String, default: "#000000" }
 });
 
+const CoordinateSchema = new mongoose.Schema({
+  lat: { type: String, default: "" },
+  lng: { type: String, default: "" }
+});
+
 const HoleSchema = new mongoose.Schema({
   courseId: { type: mongoose.Schema.Types.ObjectId, ref: "GolfCourse", required: true },
   courseName: { type: String, required: true },
@@ -17,10 +22,32 @@ const HoleSchema = new mongoose.Schema({
   courseHoleId: { type: String },
   par: { type: Number, default: 4 },
   hcp: { type: Number, default: 13 },
+  
+  // Green coordinates (optional)
   green: {
-    lat: { type: String, default: "" },
-    lng: { type: String, default: "" }
+    enabled: { type: Boolean, default: false },
+    coordinates: [CoordinateSchema]
   },
+  
+  // Water hazard (optional)
+  waterHazard: {
+    enabled: { type: Boolean, default: false },
+    coordinates: [CoordinateSchema]
+  },
+  
+  // Sand bunker
+  sandBunker: {
+    enabled: { type: Boolean, default: false },
+    coordinates: [CoordinateSchema]
+  },
+  
+  // Fairway (optional)
+  fairway: {
+    enabled: { type: Boolean, default: false },
+    coordinates: [CoordinateSchema]
+  },
+  
+  // Tee boxes
   teeBoxes: [TeeBoxSchema]
 }, {
   timestamps: true

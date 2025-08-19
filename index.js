@@ -1,4 +1,4 @@
-
+ 
 const express = require('express');
 const { connectDB } = require('./config/db');
 const { errorHandler } = require('./middleWere/errorMiddlewere');
@@ -28,6 +28,7 @@ app.get('/', (req, res) => {
 app.use('/api/user', require('./Routes/userRoute'));
 app.use('/api/admin', require('./Routes/adminRoute'));
 app.use('/api/golf', require('./Routes/GolfCourseRoute'));
+app.use('/api/public', require('./Routes/public'));
 app.use('/api/game', require('./Routes/game/gameRoundRoute'));
 app.use('/api/report', require('./Routes/game/performanceRoute'));
 app.use('/api/lession', require('./Routes/lession'));
