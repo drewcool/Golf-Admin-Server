@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const Club = require('../Modals/Club');
 const lessionModel = require('../Modals/lessionModel');
+const GolfCourse = require('../Modals/GolfCourse');
 
 const getAllAdmin = asynchandler(async (req, res) => {
   res.send('get all products');
@@ -409,4 +410,29 @@ const addManyClubs = asynchandler(async (req, res) => {
   
   
 
-module.exports = { getAllAdmin, register, login, getin,deleteAdmin,deleteUser, deleteLession,editLession ,  addClub,deleteClub, addManyClubs, getClubs, getUsersList, updateClub, getOneClub };
+const dashboardData = asynchandler(async (req, res) => {
+  try {
+    const [totalUsers, totalCourses, totalClubs] = await Promise.all([
+      User.countDocuments(),
+      GolfCourse.countDocuments(),
+      Club.countDocuments()
+    ]);
+
+    res.status(200).json({
+      status: true,
+      message: 'Dashboard data fetched successfully',
+      dashboardData: {
+        totalUsers,
+        totalServiceProviders: totalCourses,
+        totalService: totalClubs
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: error.message || 'Failed to fetch dashboard data'
+    });
+  }
+});
+
+module.exports = { getAllAdmin, register, login, getin,deleteAdmin,deleteUser, deleteLession,editLession ,  addClub,deleteClub, addManyClubs, getClubs, getUsersList, updateClub, getOneClub, dashboardData };
