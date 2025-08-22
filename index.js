@@ -6,8 +6,22 @@ require('dotenv').config();
 const cors = require("cors");
 const axios = require('axios');
 
+const allowedOrigins = [
+  'http://13.234.113.29:5173',
+  'http://localhost:5173',
+  'http://13.50.244.87',
+  'https://13.50.244.87',
+  'http://golfserver.appsxperts.live',
+  'https://golfserver.appsxperts.live'
+];
+
 app.use(cors({
-  origin: ['http://13.234.113.29:5173', 'http://localhost:5173'],
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 }))
 
